@@ -86,7 +86,7 @@ class App:
         num_files = len(self.files)
         
         if num_files not in [3, 5]:
-            messagebox.showerror("Error", "Please select exactly 3 or 5 files.")
+            messagebox.showerror("Error", "Selecciona 3 o 5 ficheros")
             return
         
         try:
