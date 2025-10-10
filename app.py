@@ -4,7 +4,6 @@ from tkinter import filedialog
 from tkinter import messagebox
 import numpy as np
 import re
-import os
 
 class App:
     def __init__(self, root):
@@ -57,11 +56,8 @@ class App:
                 if len(self.files) < 5:
                     self.files.append(file)
                     # Remove the default empty label once we add the first file
-                    if getattr(self, 'empty_label', None) is not None:
-                        try:
-                            self.empty_label.destroy()
-                        except Exception:
-                            pass
+                    if self.empty_label:
+                        self.empty_label.destroy()
                         self.empty_label = None
 
                     label = ttk.Label(self.files_list_frame, text=file)
@@ -78,7 +74,7 @@ class App:
         self.file_labels.clear()
         self.result_label.config(text="")
         # Restore default empty label
-        if getattr(self, 'empty_label', None) is None:
+        if not self.empty_label:
             self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
             self.empty_label.grid(row=0, column=0, sticky=tk.W)
 
@@ -222,13 +218,18 @@ class App:
         data_lines = []
         try:
             with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+                header_found = False
                 for line in f:
                     if 'Data Points:' in line:
                         m = re.search(r"(\d+)", line)
                         if m:
                             data_points = int(m.group(1))
                     if line.strip() == 'End Comments':
+                        header_found = True
                         break
+                
+                if not header_found:
+                    raise ValueError("No se encontró la sección 'End Comments' en el archivo")
 
                 # Read data lines
                 if data_points is None:
