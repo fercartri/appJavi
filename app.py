@@ -175,19 +175,27 @@ class App:
                     self.result_vector = None
                     lines.append(f"No se pudo calcular el vector resultado (5 ficheros): {e}")
 
-            # Display summary
-            lines = [f"Procesados {len(matrices)} ficheros:"]
-            for name, shape in summaries:
-                lines.append(f" - {name}: {shape[0]} filas x {shape[1]} columnas")
-            if num_files == 3:
-                lines.append("Aplicada: Función 1 (3 archivos)")
-            else:
-                lines.append("Aplicada: Función 2 (5 archivos)")
+            # Display completion message
+            self.result_label.config(text="Análisis completado.")
 
-            self.result_label.config(text="\n".join(lines))
+            # Show result vector in a new window
+            if hasattr(self, 'result_vector') and self.result_vector is not None:
+                win = tk.Toplevel(self.root)
+                win.title("Vector resultante")
+                win.geometry("800x600")
+                txt = tk.Text(win, wrap='none', font=('Courier', 10))
+                txt.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+                vsb = ttk.Scrollbar(win, orient='vertical', command=txt.yview)
+                vsb.pack(side=tk.RIGHT, fill=tk.Y)
+                txt.configure(yscrollcommand=vsb.set)
 
-            # Show matrices in a new window
-            self._show_matrices_window(matrices, self.files)
+                txt.insert(tk.END, "Vector resultante:\n")
+                for idx, val in enumerate(self.result_vector):
+                    if np.isnan(val.real) and np.isnan(val.imag):
+                        txt.insert(tk.END, f"{idx}: nan\n")
+                    else:
+                        txt.insert(tk.END, f"{idx}: {val.real:.6f}{val.imag:+.6f}j\n")
+                txt.configure(state='disabled')
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
