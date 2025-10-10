@@ -51,22 +51,20 @@ class App:
             filetypes=[("All files", "*.*")]
         )
 
+        # Comprobar número de ficheros válido
         if len(new_files) != 3 and len(new_files) != 5:
             messagebox.showerror("Error", "Debe seleccionar 3 o 5 ficheros")
             return
-        
-        if new_files:
-            for file in new_files:
-                if len(self.files) < 5:
-                    self.files.append(file)
-                    # Remove the default empty label once we add the first file
-                    if self.empty_label:
-                        self.empty_label.destroy()
-                        self.empty_label = None
 
-                    label = ttk.Label(self.files_list_frame, text=file)
-                    label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
-                    self.file_labels.append(label)
+        # Remove empty label if present
+        if self.empty_label:
+            self.empty_label.destroy()
+            self.empty_label = None
+        
+        for file in new_files:
+            label = ttk.Label(self.files_list_frame, text=file)
+            label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
+            self.file_labels.append(label)
 
         text = f"Se han subido {len(self.file_labels)} ficheros"
         self.result_label.config(text=text)
@@ -77,8 +75,8 @@ class App:
             label.destroy()
         self.file_labels.clear()
         self.result_label.config(text="")
-        # Restore default empty label
-        if not self.empty_label:
+        # Restore default empty label only if no files are present
+        if not self.file_labels and not self.empty_label:
             self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
             self.empty_label.grid(row=0, column=0, sticky=tk.W)
 
