@@ -15,31 +15,31 @@ class App:
         self.files = []
         self.file_labels = []
         
-        # Create main frame
+        # Crea marco principal
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Add file button
+        # Botón para añadir ficheros
         self.add_button = ttk.Button(self.main_frame, text="Subir Ficheros", command=self.add_files)
         self.add_button.grid(row=0, column=0, sticky=tk.W, pady=5)
         
-        # Clear files button
+        # Botón para borrar ficheros
         self.clear_button = ttk.Button(self.main_frame, text="Borrar Ficheros", command=self.clear_files)
         self.clear_button.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
         
-        # Files list frame
+        # Cuadro de listado de ficheros
         self.files_list_frame = ttk.LabelFrame(self.main_frame, text="Ficheros seleccionados")
         self.files_list_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
-        # Default empty label shown when no files are selected
+        # Mensaje por defecto cuando no hay ficheros
         self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
         self.empty_label.grid(row=0, column=0, sticky=tk.W)
-        
-        # Analyze button
+
+        # Botón para analizar ficheros
         self.analyze_button = ttk.Button(self.main_frame, text="Analizar Ficheros", command=self.analyze_files)
         self.analyze_button.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=10)
         
-        # Result label
+        # Mensaje de resultado
         self.result_label = ttk.Label(self.main_frame, text="")
         self.result_label.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=5)
 
