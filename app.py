@@ -8,8 +8,8 @@ import re
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.title("Análisis de Ficheros ZPlot")
-        self.root.geometry("600x400")
+        self.root.title("Análisis de Ficheros ZPlot-Javier Carmona")
+        self.root.geometry("1000x800")
         
         # Variables
         self.files = []
@@ -30,7 +30,7 @@ class App:
         # Files list frame
         self.files_list_frame = ttk.LabelFrame(self.main_frame, text="Ficheros seleccionados")
         self.files_list_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
-        
+
         # Default empty label shown when no files are selected
         self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
         self.empty_label.grid(row=0, column=0, sticky=tk.W)
@@ -71,7 +71,6 @@ class App:
                     self.file_labels.append(label)
 
     def clear_files(self):
-        """Clear all files from the list"""
         self.files.clear()
         for label in self.file_labels:
             label.destroy()
@@ -83,7 +82,6 @@ class App:
             self.empty_label.grid(row=0, column=0, sticky=tk.W)
 
     def analyze_files(self):
-        """Analyze the selected files"""
         num_files = len(self.files)
         
         if num_files not in [3, 5]:
@@ -115,7 +113,7 @@ class App:
             self.result_label.config(text="\n".join(lines))
 
             # Show matrices in a new window
-            self._show_matrices_window(matrices, self.files)
+            # self._show_matrices_window(matrices, self.files)
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
@@ -178,10 +176,9 @@ class App:
             return None
 
     def _show_matrices_window(self, matrices, filepaths):
-        """Open a new Toplevel window and display each matrix with a header."""
         win = tk.Toplevel(self.root)
         win.title("Matrices extraídas")
-        win.geometry("800x600")
+        win.geometry("1000x1000")
 
         # Text widget with scrollbar
         txt = tk.Text(win, wrap='none', font=('Courier', 10))
@@ -197,7 +194,7 @@ class App:
             txt.insert(tk.END, header)
             # Format matrix rows
             for row in matrix:
-                row_str = '\t'.join(("{:.6f}".format(x) if not np.isnan(x) else "nan") for x in row)
+                row_str = '\t\t'.join(("{:.6f}".format(x) if not np.isnan(x) else "nan") for x in row)
                 txt.insert(tk.END, row_str + "\n")
             txt.insert(tk.END, "\n")
 
