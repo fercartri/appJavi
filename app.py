@@ -70,15 +70,20 @@ class App:
         self.result_label.config(text=text)
     
     def clear_files(self):
+        # Limpiar la lista de archivos
         self.files.clear()
+        
+        # Destruir los widgets de las etiquetas existentes
         for label in self.file_labels:
             label.destroy()
         self.file_labels.clear()
+        
+        # Limpiar el mensaje de resultado
         self.result_label.config(text="")
-        # Restore default empty label only if no files are present
-        if not self.file_labels and not self.empty_label:
-            self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
-            self.empty_label.grid(row=0, column=0, sticky=tk.W)
+        
+        # Mostrar el mensaje de "no hay ficheros"
+        self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
+        self.empty_label.grid(row=0, column=0, sticky=tk.W)
 
     def analyze_files(self):
         num_files = len(self.files)
