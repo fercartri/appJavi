@@ -50,6 +50,10 @@ class App:
             title="Seleccionar ficheros",
             filetypes=[("All files", "*.*")]
         )
+
+        if len(new_files) != 3 and len(new_files) != 5:
+            messagebox.showerror("Error", "Debe seleccionar 3 o 5 ficheros")
+            return
         
         if new_files:
             for file in new_files:
@@ -80,10 +84,6 @@ class App:
 
     def analyze_files(self):
         num_files = len(self.files)
-        
-        if num_files not in [3, 5]:
-            messagebox.showerror("Error", "Selecciona 3 o 5 ficheros")
-            return
         
         try:
             matrices = []
