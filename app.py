@@ -31,6 +31,10 @@ class App:
         self.files_list_frame = ttk.LabelFrame(self.main_frame, text="Ficheros seleccionados")
         self.files_list_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         
+        # Default empty label shown when no files are selected
+        self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
+        self.empty_label.grid(row=0, column=0, sticky=tk.W)
+        
         # Analyze button
         self.analyze_button = ttk.Button(self.main_frame, text="Analizar Ficheros", command=self.analyze_files)
         self.analyze_button.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=10)
@@ -40,8 +44,6 @@ class App:
         self.result_label.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=5)
 
     def add_files(self):
-        self.clear_files()
-
         new_files = filedialog.askopenfilenames(
             title="Seleccionar ficheros",
             filetypes=[("All files", "*.*")]
@@ -56,6 +58,14 @@ class App:
             for file in new_files:
                 if len(self.files) < 5:
                     self.files.append(file)
+                    # Remove the default empty label once we add the first file
+                    if getattr(self, 'empty_label', None) is not None:
+                        try:
+                            self.empty_label.destroy()
+                        except Exception:
+                            pass
+                        self.empty_label = None
+
                     label = ttk.Label(self.files_list_frame, text=file)
                     label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
                     self.file_labels.append(label)
@@ -67,6 +77,10 @@ class App:
             label.destroy()
         self.file_labels.clear()
         self.result_label.config(text="")
+        # Restore default empty label
+        if getattr(self, 'empty_label', None) is None:
+            self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
+            self.empty_label.grid(row=0, column=0, sticky=tk.W)
 
     def analyze_files(self):
         """Analyze the selected files"""
