@@ -99,7 +99,7 @@ class App:
                     if "Data Points:" in line:
                         data_points = int(line.split(":")[1].strip())
                     # Los datos numéricos comienzan después de "End Comments"
-                    if "End Comments:" in line:
+                    if "End Comments" in line:
                         data_start = i + 1
                         break
 
@@ -128,8 +128,6 @@ class App:
                     messagebox.showerror("Error", "Error al encontrar datos")
                     return
                 
-                print(np.array(data))
-
                 return np.array(data), data_points
                 
         except Exception as e:
