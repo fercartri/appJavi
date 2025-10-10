@@ -1,4 +1,4 @@
-Repositorio para la aplicación "appJavi": una herramienta en Python (Tkinter) para el análisis de ficheros empleada por el grupo SMAP de Física de la Universidad de Valladolid.
+# Análisis de ficheros para el grupo SMAP de la Universidad de Valladolid.
 
 ## Qué es
 
