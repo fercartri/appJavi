@@ -15,34 +15,33 @@ class App:
         self.files = []
         self.file_labels = []
         
-        # Crear ventana principal
+        # Create main frame
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Botón para añadir ficheros
+        # Add file button
         self.add_button = ttk.Button(self.main_frame, text="Subir Ficheros", command=self.add_files)
         self.add_button.grid(row=0, column=0, sticky=tk.W, pady=5)
         
-        # Botón para borrar ficheros
+        # Clear files button
         self.clear_button = ttk.Button(self.main_frame, text="Borrar Ficheros", command=self.clear_files)
         self.clear_button.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
         
-        # Cuadro de lista de ficheros
+        # Files list frame
         self.files_list_frame = ttk.LabelFrame(self.main_frame, text="Ficheros seleccionados")
         self.files_list_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
-        # Mensaje por defecto cuando no hay ficheros seleccionados
+        # Default empty label shown when no files are selected
         self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
         self.empty_label.grid(row=0, column=0, sticky=tk.W)
-
-        # Botón para analizar ficheros
+        
+        # Analyze button
         self.analyze_button = ttk.Button(self.main_frame, text="Analizar Ficheros", command=self.analyze_files)
         self.analyze_button.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=10)
         
-        # Resultados: usar un campo de texto en vez de Label
-        self.result_text = tk.Text(self.main_frame, height=10, width=80, wrap='word')
-        self.result_text.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=5)
-        self.result_text.config(state='disabled')
+        # Result label
+        self.result_label = ttk.Label(self.main_frame, text="")
+        self.result_label.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=5)
 
     def add_files(self):
         self.clear_files()
@@ -78,7 +77,7 @@ class App:
         for label in self.file_labels:
             label.destroy()
         self.file_labels.clear()
-        self.result_text.config(text="")
+        self.result_label.config(text="")
         # Restore default empty label
         if getattr(self, 'empty_label', None) is None:
             self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
@@ -115,7 +114,98 @@ class App:
 
             # store vectors
             self.vectors = vectors
-        
+
+            
+
+            # Prepare summary lines so they can be updated with result or errors
+            lines = [f"Procesados {len(matrices)} ficheros:"]
+            for name, shape in summaries:
+                lines.append(f" - {name}: {shape[0]} filas x {shape[1]} columnas")
+            if num_files == 3:
+                lines.append("Aplicada: Función 1 (3 archivos)")
+            else:
+                lines.append("Aplicada: Función 2 (5 archivos)")
+
+            # (V3 - V2) / (1 - ((V3 - V2) / V1))
+            if len(matrices) == 3:
+                try:
+                    V1, V2, V3 = vectors[0], vectors[1], vectors[2]
+                    delta = V3 - V2
+                    # compute ratio = delta / V1 safely (avoid divide-by-zero warnings)
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        ratio = np.empty_like(delta, dtype=complex)
+                        # where V1 is finite and not NaN, divide; otherwise keep NaN
+                        valid_v1 = ~np.isnan(V1)
+                        ratio[:] = np.nan + 1j * np.nan
+                        np.divide(delta, V1, out=ratio, where=valid_v1)
+                        denom = 1 - ratio
+                        # avoid division where denom is (close to) zero
+                        safe = ~np.isclose(denom, 0)
+                        result = np.empty_like(delta, dtype=complex)
+                        result[:] = np.nan + 1j * np.nan
+                        np.divide(delta, denom, out=result, where=safe)
+
+                    self.result_vector = result
+                    # append a short preview to the summary lines
+                    preview_n = 10
+                    preview = []
+                    for val in result[:preview_n]:
+                        if np.isnan(val.real) and np.isnan(val.imag):
+                            preview.append('nan')
+                        else:
+                            preview.append(f"{val.real:.6f}{val.imag:+.6f}j")
+                    lines.append("Resultado (primeras {} entradas): {}".format(preview_n, ', '.join(preview)))
+                except Exception as e:
+                    # store nothing on failure, but continue
+                    self.result_vector = None
+                    lines.append(f"No se pudo calcular el vector resultado: {e}")
+            else:
+                try:
+                    V1, V2, V3, V4, V5 = vectors[0], vectors[1], vectors[2], vectors[3], vectors[4]
+                    # formula: (V4*(V3-V2)*(V1-V5))/((V1-V3)*(V5-V2))
+                    num = V4 * (V3 - V2) * (V1 - V5)
+                    den = (V1 - V3) * (V5 - V2)
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        result5 = np.empty_like(num, dtype=complex)
+                        result5[:] = np.nan + 1j * np.nan
+                        safe = ~np.isclose(den, 0)
+                        np.divide(num, den, out=result5, where=safe)
+
+                    self.result_vector = result5
+                    preview_n = 10
+                    preview = []
+                    for val in result5[:preview_n]:
+                        if np.isnan(val.real) and np.isnan(val.imag):
+                            preview.append('nan')
+                        else:
+                            preview.append(f"{val.real:.6f}{val.imag:+.6f}j")
+                    lines.append("Resultado (primeras {} entradas): {}".format(preview_n, ', '.join(preview)))
+                except Exception as e:
+                    self.result_vector = None
+                    lines.append(f"No se pudo calcular el vector resultado (5 ficheros): {e}")
+
+            # Display completion message (summary + result preview or errors)
+            self.result_label.config(text="\n".join(lines))
+
+            # Show result vector in a new window
+            if hasattr(self, 'result_vector') and self.result_vector is not None:
+                win = tk.Toplevel(self.root)
+                win.title("Vector resultante")
+                win.geometry("800x600")
+                txt = tk.Text(win, wrap='none', font=('Courier', 10))
+                txt.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+                vsb = ttk.Scrollbar(win, orient='vertical', command=txt.yview)
+                vsb.pack(side=tk.RIGHT, fill=tk.Y)
+                txt.configure(yscrollcommand=vsb.set)
+
+                txt.insert(tk.END, "Vector resultante:\n")
+                for idx, val in enumerate(self.result_vector):
+                    if np.isnan(val.real) and np.isnan(val.imag):
+                        txt.insert(tk.END, f"{idx}: nan\n")
+                    else:
+                        txt.insert(tk.END, f"{idx}: {val.real:.6f}{val.imag:+.6f}j\n")
+                txt.configure(state='disabled')
+
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
