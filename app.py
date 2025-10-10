@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 import numpy as np
 import re
+import os
 
 class App:
     def __init__(self, root):
@@ -52,11 +53,6 @@ class App:
         )
         
         if new_files:
-            # Clear existing files if adding new ones would exceed 5
-            if len(self.files) + len(new_files) > 5:
-                self.clear_files()
-            
-            # Add new files
             for file in new_files:
                 if len(self.files) < 5:
                     self.files.append(file)
@@ -71,7 +67,11 @@ class App:
                     label = ttk.Label(self.files_list_frame, text=file)
                     label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
                     self.file_labels.append(label)
-
+        # Update result label to show the stored file labels' texts
+        labels_text = [lbl.cget('text') for lbl in self.file_labels]
+        text = f"Ficheros actuales ({len(labels_text)}):\n" + "\n".join(f" - {os.path.basename(t)}" for t in labels_text)
+        self.result_label.config(text=text)
+    
     def clear_files(self):
         self.files.clear()
         for label in self.file_labels:
