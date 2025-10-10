@@ -104,9 +104,6 @@ class App:
             # Create complex vectors from columns 5 (index 4) and 6 (index 5)
             vectors = []
             for m in matrices:
-                rows = m.shape[0]
-                cols = m.shape[1]
-
                 real = m[:, 4]
                 imag = m[:, 5]
 
@@ -115,88 +112,7 @@ class App:
 
             # store vectors
             self.vectors = vectors
-
-            # If exactly 3 matrices, compute the requested combined vector:
-            # result = (V3 - V2) / (1 - ((V3 - V2) / V1))
-            if len(matrices) == 3:
-                try:
-                    V1, V2, V3 = vectors[0], vectors[1], vectors[2]
-                    delta = V3 - V2
-                    # compute ratio = delta / V1 safely (avoid divide-by-zero warnings)
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        ratio = np.empty_like(delta, dtype=complex)
-                        # where V1 is finite and not NaN, divide; otherwise keep NaN
-                        valid_v1 = ~np.isnan(V1)
-                        ratio[:] = np.nan + 1j * np.nan
-                        np.divide(delta, V1, out=ratio, where=valid_v1)
-                        denom = 1 - ratio
-                        # avoid division where denom is (close to) zero
-                        safe = ~np.isclose(denom, 0)
-                        result = np.empty_like(delta, dtype=complex)
-                        result[:] = np.nan + 1j * np.nan
-                        np.divide(delta, denom, out=result, where=safe)
-
-                    self.result_vector = result
-                    # append a short preview to the summary lines
-                    preview_n = 10
-                    preview = []
-                    for val in result[:preview_n]:
-                        if np.isnan(val.real) and np.isnan(val.imag):
-                            preview.append('nan')
-                        else:
-                            preview.append(f"{val.real:.6f}{val.imag:+.6f}j")
-                    lines.append("Resultado (primeras {} entradas): {}".format(preview_n, ', '.join(preview)))
-                except Exception as e:
-                    # store nothing on failure, but continue
-                    self.result_vector = None
-                    lines.append(f"No se pudo calcular el vector resultado: {e}")
-            else:
-                try:
-                    V1, V2, V3, V4, V5 = vectors[0], vectors[1], vectors[2], vectors[3], vectors[4]
-                    # formula: (V4*(V3-V2)*(V1-V5))/((V1-V3)*(V5-V2))
-                    num = V4 * (V3 - V2) * (V1 - V5)
-                    den = (V1 - V3) * (V5 - V2)
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        result5 = np.empty_like(num, dtype=complex)
-                        result5[:] = np.nan + 1j * np.nan
-                        safe = ~np.isclose(den, 0)
-                        np.divide(num, den, out=result5, where=safe)
-
-                    self.result_vector = result5
-                    preview_n = 10
-                    preview = []
-                    for val in result5[:preview_n]:
-                        if np.isnan(val.real) and np.isnan(val.imag):
-                            preview.append('nan')
-                        else:
-                            preview.append(f"{val.real:.6f}{val.imag:+.6f}j")
-                    lines.append("Resultado (primeras {} entradas): {}".format(preview_n, ', '.join(preview)))
-                except Exception as e:
-                    self.result_vector = None
-                    lines.append(f"No se pudo calcular el vector resultado (5 ficheros): {e}")
-
-            # Display completion message
-            self.result_label.config(text="Análisis completado.")
-
-            # Show result vector in a new window
-            if hasattr(self, 'result_vector') and self.result_vector is not None:
-                win = tk.Toplevel(self.root)
-                win.title("Vector resultante")
-                win.geometry("800x600")
-                txt = tk.Text(win, wrap='none', font=('Courier', 10))
-                txt.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-                vsb = ttk.Scrollbar(win, orient='vertical', command=txt.yview)
-                vsb.pack(side=tk.RIGHT, fill=tk.Y)
-                txt.configure(yscrollcommand=vsb.set)
-
-                txt.insert(tk.END, "Vector resultante:\n")
-                for idx, val in enumerate(self.result_vector):
-                    if np.isnan(val.real) and np.isnan(val.imag):
-                        txt.insert(tk.END, f"{idx}: nan\n")
-                    else:
-                        txt.insert(tk.END, f"{idx}: {val.real:.6f}{val.imag:+.6f}j\n")
-                txt.configure(state='disabled')
-
+        
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
