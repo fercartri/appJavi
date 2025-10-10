@@ -90,33 +90,51 @@ class App:
         try:
             with open(filepath, 'r') as file:
                 lines = file.readlines()
-
+    
+                data_points = None
+                data_start = 0
+                
                 for i, line in enumerate(lines):
+                    # Buscar el número de datos
                     if "Data Points:" in line:
                         data_points = int(line.split(":")[1].strip())
+                    # Los datos numéricos comienzan después de "End Comments"
                     if "End Comments:" in line:
                         data_start = i + 1
                         break
-                
-                # Extraer los datos numéricos
-                data_lines = lines[data_start:]
+
                 data = []
-                for line in data_lines:
-                    # Eliminar espacios en blanco extras y dividir por tabulaciones o espacios
-                    values = re.split(r'\s+', line.strip())
-                    # Convertir strings a números flotantes, ignorando valores vacíos
-                    try:
-                        row = [float(val) for val in values if val]
-                        if row:  # Solo agregar si la fila tiene datos
-                            data.append(row)
-                    except ValueError:
-                        continue  # Ignorar líneas que no se pueden convertir a números
+
+                if data_points is not None:
+                    # Procesar solo las líneas que contienen valores numéricos
+                    for line in lines[data_start:]:
+                        line = line.strip()
+                        if not line:  # Saltar líneas vacías
+                            continue
+                            
+                        values = re.split(r'\s+', line)
+                        try:
+                            # Intentar convertir a float para verificar si es una línea de datos
+                            row = [float(val) for val in values if val]
+                            if row:  # Solo agregar si la fila tiene datos
+                                data.append(row)
+                                # Detener cuando hayamos procesado todos los puntos de datos esperados
+                                if len(data) >= data_points:
+                                    break
+                        except ValueError:
+                            # Si no se puede convertir, es una línea de cabecera o comentario, la saltamos
+                            continue
+                else:
+                    messagebox.showerror("Error", "Error al encontrar datos")
+                    return
                 
+                print(np.array(data))
+
                 return np.array(data), data_points
                 
         except Exception as e:
             messagebox.showerror("Error", f"Error al leer el archivo {filepath}: {str(e)}")
-            return None, None
+            return
 
     def analizar_ficheros(self):
         num_files = len(self.files)
