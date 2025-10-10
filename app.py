@@ -67,9 +67,8 @@ class App:
                     label = ttk.Label(self.files_list_frame, text=file)
                     label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
                     self.file_labels.append(label)
-        # Update result label to show the stored file labels' texts
-        labels_text = [lbl.cget('text') for lbl in self.file_labels]
-        text = f"Ficheros actuales ({len(labels_text)}):\n" + "\n".join(f" - {os.path.basename(t)}" for t in labels_text)
+
+        text = f"Se han subido {len(self.file_labels)} ficheros"
         self.result_label.config(text=text)
     
     def clear_files(self):
