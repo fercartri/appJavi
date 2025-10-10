@@ -64,6 +64,7 @@ class App:
         for file in new_files:
             label = ttk.Label(self.files_list_frame, text=file)
             label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
+            self.files.append(file)
             self.file_labels.append(label)
 
         text = f"Se han subido {len(self.file_labels)} ficheros"
@@ -87,6 +88,8 @@ class App:
 
     def analyze_files(self):
         num_files = len(self.files)
+
+        print(num_files)
         
         try:
             matrices = []
