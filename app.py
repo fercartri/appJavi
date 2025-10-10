@@ -101,6 +101,21 @@ class App:
             # Store matrices in the instance for later use
             self.matrices = matrices
 
+            # Create complex vectors from columns 5 (index 4) and 6 (index 5)
+            vectors = []
+            for m in matrices:
+                rows = m.shape[0]
+                cols = m.shape[1]
+
+                real = m[:, 4]
+                imag = m[:, 5]
+
+                vec = real + 1j * imag
+                vectors.append(vec)
+
+            # store vectors
+            self.vectors = vectors
+
             # Display summary
             lines = [f"Procesados {len(matrices)} ficheros:"]
             for name, shape in summaries:
@@ -113,7 +128,7 @@ class App:
             self.result_label.config(text="\n".join(lines))
 
             # Show matrices in a new window
-            # self._show_matrices_window(matrices, self.files)
+            self._show_matrices_window(matrices, self.files)
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
