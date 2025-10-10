@@ -89,8 +89,6 @@ class App:
     def analyze_files(self):
         num_files = len(self.files)
 
-        print(num_files)
-        
         try:
             matrices = []
             summaries = []
