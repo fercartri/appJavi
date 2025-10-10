@@ -122,8 +122,8 @@ class App:
                                 if len(data) >= data_points:
                                     break
                         except ValueError:
-                            # Si no se puede convertir, es una línea de cabecera o comentario, la saltamos
-                            continue
+                            messagebox.showerror("Error", "Error al convertir datos")
+                            return
                 else:
                     messagebox.showerror("Error", "Error al encontrar datos")
                     return
