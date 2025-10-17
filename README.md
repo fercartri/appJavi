@@ -1,11 +1,6 @@
-<div align="center">
-  <h1>Analizador de Ficheros para SMAP</h1>
-  <p>
-    Una aplicación de escritorio para el análisis de datos del grupo de investigación SMAP de la Universidad de Valladolid.
-  </p>
-</div>
+# Analizador de Ficheros para SMAP
 
----
+Una aplicación de escritorio para el análisis de datos del grupo de investigación SMAP de la Universidad de Valladolid.
 
 ## 1. ¿Qué es?
 
