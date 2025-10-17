@@ -10,6 +10,7 @@ class App:
         self.root = root
         self.root.title("Análisis de Ficheros ZPlot-Javier Carmona")
         self.root.geometry("1000x800")
+        self.root.state('zoomed')
         
         # Variables
         self.files = []

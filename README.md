@@ -36,7 +36,7 @@ pip install numpy
 2. Ejecutar la aplicación:
 
 ```powershell
-python appv4.py
+python app.py
 ```
 
 3. Usar el botón "Add Files" para seleccionar exactamente 3 o 5 ficheros.
