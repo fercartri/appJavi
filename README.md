@@ -1,30 +1,43 @@
-# Análisis de ficheros para el grupo SMAP de la Universidad de Valladolid.
+<div align="center">
+  <h1>Analizador de Ficheros para SMAP</h1>
+  <p>
+    Una aplicación de escritorio para el análisis de datos del grupo de investigación SMAP de la Universidad de Valladolid.
+  </p>
+</div>
 
-## Qué es
+---
 
-Esta aplicación permite seleccionar y procesar conjuntos de ficheros de datos (formatos tipo Z de ZPlot u otros con columnas numéricas) mediante una interfaz gráfica sencilla creada con Tkinter. Está pensada para uso del grupo SMAP para automatizar el cálculo de vectores complejos y operaciones entre ellos según el número de ficheros cargados (3 o 5).
+## 1. ¿Qué es?
 
-## Características principales
+Esta aplicación permite seleccionar y procesar conjuntos de ficheros de datos (compatibles con el formato de salida de ZPlot) mediante una interfaz gráfica sencilla. Ha sido desarrollada para el grupo de investigación **Superficies y Materiales Porosos (SMAP)** de la Universidad de Valladolid con el objetivo de automatizar una serie de cálculos específicos entre vectores de números complejos.
 
-- Interfaz gráfica basada en Tkinter.
-- Selección de exactamente 3 o 5 ficheros para el análisis.
-- Lectura de ficheros con cabeceras de longitud variable (se omite todo hasta `End Comments` y se respeta el campo `Data Points`).
-- Conversión de las columnas de datos a tipos numéricos y creación de vectores complejos a partir de las columnas 5 (parte real) y 6 (parte imaginaria).
-- Cálculos automáticos:
-	- Si se cargan 3 ficheros: calcula el vector resultado punto a punto usando la fórmula (V3 - V2) / (1 - ((V3 - V2) / V1)).
-	- Si se cargan 5 ficheros: calcula el vector resultado usando (V4 * (V3 - V2) * (V1 - V5)) / ((V1 - V3) * (V5 - V2)).
+## 2. Características Principales
 
-## Archivos relevantes
+- **Interfaz Gráfica de Usuario (GUI)**: Creada con Tkinter para una experiencia de usuario sencilla e intuitiva.
+- **Selección de Ficheros**: Permite seleccionar exactamente **3 o 5 ficheros** para el análisis.
+- **Parseo Inteligente**: Lee ficheros con cabeceras de longitud variable, identificando el bloque de datos a partir de los marcadores `Data Points:` y `End Comments`.
+- **Extracción de Vectores**: Crea automáticamente un vector de números complejos por cada fichero, utilizando la **columna 5 como parte real** y la **columna 6 como parte imaginaria**.
+- **Cálculos Automatizados**:
+  - **Con 3 ficheros**: Calcula el vector resultante punto a punto usando la fórmula:
+    `Resultado = (V3 - V2) / (1 - ((V3 - V2) / V1))`
+  - **Con 5 ficheros**: Calcula el vector resultante usando la fórmula:
+    `Resultado = (V4 * (V3 - V2) * (V1 - V5)) / ((V1 - V3) * (V5 - V2))`
+- **Visualización de Resultados**: Muestra en pantalla las matrices originales, los vectores complejos extraídos y el vector resultante final, con un formato claro y alineado.
+- **Manejo de Errores**: Informa al usuario sobre ficheros con formato incorrecto o divisiones por cero durante el cálculo.
 
-- `appv4.py` / `appv5.py` (según versión): implementaciones de la aplicación Tkinter para seleccionar, parsear y procesar ficheros.
+## 3. Tecnologías Utilizadas
 
-## Requisitos
+- **Lenguaje**: Python 3
+- **Interfaz Gráfica**: Tkinter (biblioteca estándar de Python)
+- **Cálculo Numérico**: NumPy
+
+## 4. Requisitos
 
 - Python 3.8+ (recomendado)
 - Paquetes Python:
-	- `numpy`
+  - `numpy`
 
-Instalación de dependencias (ejemplo):
+Para instalar la única dependencia necesaria, abre una terminal y ejecuta:
 
 ```powershell
 pip install numpy
