@@ -10,8 +10,8 @@ Esta aplicación permite seleccionar y procesar conjuntos de ficheros de datos (
 
 - **Interfaz Gráfica de Usuario (GUI)**: Creada con Tkinter para una experiencia de usuario sencilla e intuitiva.
 - **Selección de Ficheros**: Permite seleccionar exactamente **3 o 5 ficheros** para el análisis.
-- **Parseo Inteligente**: Lee ficheros con cabeceras de longitud variable, identificando el bloque de datos a partir de los marcadores `"Data Points:"` y `"End Comments"`.
-- **Extracción de Vectores**: Crea automáticamente un vector de números complejos por cada fichero, utilizando la **columna 5 como parte real** y la **columna 6 como parte imaginaria**.
+- **Parseo Inteligente**: Lee ficheros con cabeceras de longitud variable, identificando el bloque de datos a partir de los marcadores `Data Points:` y `End Comments`.
+- **Extracción de Vectores**: Crea automáticamente un vector de números complejos por cada fichero, utilizando la **5ª columna como parte real** y la **6ª columna como parte imaginaria**.
 - **Cálculos Automatizados**:
   - **Con 3 ficheros**: Calcula el vector resultante punto a punto usando la fórmula:
     `Resultado = (V3 - V2) / (1 - ((V3 - V2) / V1))`
@@ -22,7 +22,7 @@ Esta aplicación permite seleccionar y procesar conjuntos de ficheros de datos (
 
 ## 3. Tecnologías Utilizadas
 
-- **Lenguaje**: Python 3
+- **Lenguaje**: Python 3 (3.10.11)
 - **Interfaz Gráfica**: Tkinter (biblioteca estándar de Python)
 - **Cálculo Numérico**: NumPy
 
@@ -47,8 +47,8 @@ pip install numpy
 python app.py
 ```
 
-3. Usar el botón "Add Files" para seleccionar exactamente 3 o 5 ficheros.
-4. Pulsar "Process Files" (o "Analyze Files" en versiones más simples) para obtener los resultados.
+3. Usar el botón "Subir Ficheros" y seleccionar los 3 o 5 ficheros a analizar.
+4. Pulsar "Analizar ficheros" para obtener los resultados.
 
 Los resultados se muestran en la interfaz y pueden copiarse desde el área de texto.
 
@@ -59,6 +59,5 @@ Los resultados se muestran en la interfaz y pueden copiarse desde el área de te
 - Se recomiendan copias de seguridad de los datos originales antes de procesarlos.
 
 ## Contacto
-
-Proyecto mantenido para el grupo SMAP — Universidad de Valladolid.
+Proyecto realizado por Fernando Carmona para el grupo el grupo SMAP — Universidad de Valladolid.
 Para dudas o mejoras, contactar con los responsables del repositorio.
