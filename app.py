@@ -207,11 +207,42 @@ class App:
             )
         else:
             self.result_label.config(text="No se pudo procesar ningún archivo correctamente")
+            return # Salir si no hay matrices que procesar
         
-        # Aquí es donde continuarías con los cálculos.
-        # Por ahora, las matrices ya están cargadas en 'matrices_datos'
-        # y mostradas en la pantalla.
+        # --- PASO 2: Crear vectores complejos a partir de las matrices ---
+        vectores_complejos = {}
+        for file, matriz in matrices_datos.items():
+            nombre_archivo = Path(file).name
+            # Comprobar si la matriz tiene suficientes columnas
+            if matriz.shape[1] < 6:
+                messagebox.showwarning("Aviso", f"El fichero '{nombre_archivo}' tiene menos de 6 columnas y no se puede procesar para obtener el vector complejo.")
+                continue
+            
+            # Columna 5 (índice 4) es la parte real, Columna 6 (índice 5) es la imaginaria
+            parte_real = matriz[:, 4]
+            parte_imaginaria = matriz[:, 5]
+            
+            vectores_complejos[file] = parte_real + 1j * parte_imaginaria
 
+        # --- Mostrar los vectores complejos creados ---
+        if vectores_complejos:
+            self.matrices_text.insert(tk.END, "============================================================\n")
+            self.matrices_text.insert(tk.END, "--- Vectores Complejos (Columna 5: Real, Columna 6: Imag) ---\n")
+            self.matrices_text.insert(tk.END, "============================================================\n\n")
+
+            for file, vector in vectores_complejos.items():
+                nombre_archivo = Path(file).name
+                self.matrices_text.insert(tk.END, f"--- Vector de: {nombre_archivo} ---\n")
+
+                # Formatear cada número complejo y unirlo con saltos de línea
+                vector_str = "\n".join([f"{c.real: >12.6f} {c.imag: >+12.6f}j" for c in vector])
+
+                self.matrices_text.insert(tk.END, "      Real         Imaginario\n")
+                self.matrices_text.insert(tk.END, vector_str + "\n\n")
+
+        # El siguiente paso sería usar 'vectores_complejos' para los cálculos
+        # de 3 o 5 ficheros.
+        
         
 
 def main():
