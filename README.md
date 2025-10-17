@@ -10,7 +10,7 @@ Esta aplicación permite seleccionar y procesar conjuntos de ficheros de datos (
 
 - **Interfaz Gráfica de Usuario (GUI)**: Creada con Tkinter para una experiencia de usuario sencilla e intuitiva.
 - **Selección de Ficheros**: Permite seleccionar exactamente **3 o 5 ficheros** para el análisis.
-- **Parseo Inteligente**: Lee ficheros con cabeceras de longitud variable, identificando el bloque de datos a partir de los marcadores `Data Points:` y `End Comments`.
+- **Parseo Inteligente**: Lee ficheros con cabeceras de longitud variable, identificando el bloque de datos a partir de los marcadores `"Data Points:"` y `"End Comments"`.
 - **Extracción de Vectores**: Crea automáticamente un vector de números complejos por cada fichero, utilizando la **columna 5 como parte real** y la **columna 6 como parte imaginaria**.
 - **Cálculos Automatizados**:
   - **Con 3 ficheros**: Calcula el vector resultante punto a punto usando la fórmula:
