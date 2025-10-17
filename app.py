@@ -60,6 +60,11 @@ class App:
 
         self.matrices_text = tk.Text(self.matrices_frame, wrap="none", height=10)
         self.matrices_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+
+        self.scrollbar_x = ttk.Scrollbar(self.matrices_frame, orient=tk.HORIZONTAL, command=self.matrices_text.xview)
+        self.scrollbar_x.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        self.matrices_text.config(xscrollcommand=self.scrollbar_x.set)
+
         
         self.scrollbar_y = ttk.Scrollbar(self.matrices_frame, orient=tk.VERTICAL, command=self.matrices_text.yview)
         self.scrollbar_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
