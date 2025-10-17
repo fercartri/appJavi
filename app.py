@@ -4,6 +4,8 @@ from tkinter import filedialog
 from tkinter import messagebox
 import numpy as np
 import re
+from pathlib import Path
+import io
 
 class App:
     def __init__(self, root):
@@ -19,10 +21,16 @@ class App:
         # Crea marco principal
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        # Configurar el grid para que el marco principal se expanda
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
         
         # Botón para añadir ficheros
         self.add_button = ttk.Button(self.main_frame, text="Subir Ficheros", command=self.add_files)
         self.add_button.grid(row=0, column=0, sticky=tk.W, pady=5)
+        # Configurar el grid del main_frame para que la fila de resultados se expanda
+        self.main_frame.rowconfigure(4, weight=1)
+        self.main_frame.columnconfigure(0, weight=1)
         
         # Botón para borrar ficheros
         self.clear_button = ttk.Button(self.main_frame, text="Borrar Ficheros", command=self.delete_files)
@@ -34,15 +42,28 @@ class App:
 
         # Mensaje por defecto cuando no hay ficheros
         self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
-        self.empty_label.grid(row=0, column=0, sticky=tk.W)
+        self.empty_label.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
 
         # Botón para analizar ficheros
-        self.analyze_button = ttk.Button(self.main_frame, text="Analizar Ficheros", command=self.analizar_ficheros)
+        self.analyze_button = ttk.Button(self.main_frame, text="Analizar Ficheros", command=self.analyze_files)
         self.analyze_button.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=10)
         
         # Mensaje de resultado
         self.result_label = ttk.Label(self.main_frame, text="")
         self.result_label.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=5)
+
+        # Frame para mostrar las matrices
+        self.matrices_frame = ttk.LabelFrame(self.main_frame, text="Contenido de las Matrices")
+        self.matrices_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        self.matrices_frame.rowconfigure(0, weight=1)
+        self.matrices_frame.columnconfigure(0, weight=1)
+
+        self.matrices_text = tk.Text(self.matrices_frame, wrap="none", height=10)
+        self.matrices_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        self.scrollbar_y = ttk.Scrollbar(self.matrices_frame, orient=tk.VERTICAL, command=self.matrices_text.yview)
+        self.scrollbar_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.matrices_text.config(yscrollcommand=self.scrollbar_y.set)
 
     def add_files(self):
         self.delete_files()
@@ -57,10 +78,8 @@ class App:
             messagebox.showerror("Error", "Debe seleccionar 3 o 5 ficheros")
             return
 
-        # Remove empty label if present
-        if self.empty_label:
-            self.empty_label.destroy()
-            self.empty_label = None
+        # Ocultar el mensaje de "no hay ficheros"
+        self.empty_label.grid_remove()
         
         for file in new_files:
             label = ttk.Label(self.files_list_frame, text=file)
@@ -83,9 +102,11 @@ class App:
         # Limpiar el mensaje de resultado
         self.result_label.config(text="")
         
-        # Mostrar el mensaje de "no hay ficheros"
-        self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
-        self.empty_label.grid(row=0, column=0, sticky=tk.W)
+        # Volver a mostrar el mensaje de "no hay ficheros"
+        self.empty_label.grid()
+
+        # Limpiar el área de texto de las matrices
+        self.matrices_text.delete("1.0", tk.END)
 
     def read_matrix(self, filepath):
         try:
@@ -123,11 +144,11 @@ class App:
                                 if len(data) >= data_points:
                                     break
                         except ValueError:
-                            messagebox.showerror("Error", "Error al convertir datos")
-                            return
+                            # Ignorar líneas que no se pueden convertir a float (posibles comentarios extra)
+                            continue
                 else:
-                    messagebox.showerror("Error", "Error al encontrar datos")
-                    return
+                    messagebox.showerror("Error", f"No se encontró 'Data Points:' o 'End Comments' en el fichero: {Path(filepath).name}")
+                    return None, None
                 
                 return np.array(data), data_points
                 
@@ -135,7 +156,7 @@ class App:
             messagebox.showerror("Error", f"Error al leer el archivo {filepath}: {str(e)}")
             return
 
-    def analizar_ficheros(self):
+    def analyze_files(self):
         num_files = len(self.files)
         if num_files == 0:
             messagebox.showwarning("Aviso", "No hay ficheros seleccionados para analizar")
@@ -143,58 +164,53 @@ class App:
         
         # Diccionario para almacenar las matrices de datos y número de puntos
         matrices_datos = {}
-        num_puntos = {}
+        errores = []
         
         # Procesar cada archivo
         for file in self.files:
             matriz, puntos = self.read_matrix(file)
             if matriz is not None:
                 matrices_datos[file] = matriz
-                num_puntos[file] = puntos
+            else:
+                errores.append(Path(file).name)
         
+        # Si hubo errores, informar al usuario
+        if errores:
+            messagebox.showwarning("Aviso", "Algunos ficheros no se pudieron procesar:\n" + "\n".join(errores))
+        
+        # Limpiar el área de texto antes de mostrar nuevos resultados
+        self.matrices_text.delete("1.0", tk.END)
+
         # Actualizar el mensaje de resultado
         num_matrices = len(matrices_datos)
         if num_matrices > 0:
             resultado = []
             for file in matrices_datos:
+                # Comprobar si la matriz está vacía
+                if matrices_datos[file].size == 0:
+                    continue
                 shape = matrices_datos[file].shape
-                puntos = num_puntos[file]
-                nombre_archivo = file.split("\\")[-1]  # Obtener solo el nombre del archivo
-                resultado.append(f"{nombre_archivo}: {shape[0]}x{shape[1]} (Puntos de datos: {puntos})")
+                nombre_archivo = Path(file).name # Obtener solo el nombre del archivo
+                resultado.append(f"{nombre_archivo}: {shape[0]}x{shape[1]}")
             
+                # Imprimir la matriz en el widget de texto
+                self.matrices_text.insert(tk.END, f"--- Matriz de: {nombre_archivo} ---\n")
+                # Usar np.savetxt con un buffer en memoria para un formato limpio,
+                # sin corchetes y con columnas bien alineadas.
+                string_buffer = io.StringIO()
+                np.savetxt(string_buffer, matrices_datos[file], fmt='%.6f', delimiter='\t\t')
+                matriz_str = string_buffer.getvalue()
+                self.matrices_text.insert(tk.END, matriz_str + "\n\n")
+
             self.result_label.config(
                 text="Archivos procesados:\n" + "\n".join(resultado)
             )
         else:
             self.result_label.config(text="No se pudo procesar ningún archivo correctamente")
         
-        return matrices_datos, num_puntos
-
-        if num_files == 0:
-            messagebox.showerror("Error", "Debe seleccionar 3 o 5 ficheros")
-            return
-        
-        # Diccionario para almacenar las matrices de datos
-        matrices_datos = {}
-        
-        # Procesar cada archivo
-        for file in self.files:
-            matriz = self.read_matrix(file)
-            if matriz is not None:
-                matrices_datos[file] = matriz
-        
-        # Actualizar el mensaje de resultado
-        num_matrices = len(matrices_datos)
-        if num_matrices > 0:
-            shapes = [matriz.shape for matriz in matrices_datos.values()]
-            shapes_str = ", ".join([f"{shape[0]}x{shape[1]}" for shape in shapes])
-            self.result_label.config(
-                text=f"Se han procesado {num_matrices} archivos. Dimensiones de las matrices: {shapes_str}"
-            )
-        else:
-            self.result_label.config(text="No se pudo procesar ningún archivo correctamente")
-        
-        return matrices_datos
+        # Aquí es donde continuarías con los cálculos.
+        # Por ahora, las matrices ya están cargadas en 'matrices_datos'
+        # y mostradas en la pantalla.
 
         
 
