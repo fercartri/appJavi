@@ -210,19 +210,26 @@ class App:
             return # Salir si no hay matrices que procesar
         
         # --- PASO 2: Crear vectores complejos a partir de las matrices ---
-        vectores_complejos = {}
-        for file, matriz in matrices_datos.items():
+        vectores_complejos = []
+        archivos_vectores = [] # Guardar los nombres de archivo correspondientes
+        for file in self.files:
+            # Si un fichero falló en la lectura, no estará en matrices_datos
+            if file not in matrices_datos:
+                continue
+
+            matriz = matrices_datos[file]
             nombre_archivo = Path(file).name
             # Comprobar si la matriz tiene suficientes columnas
             if matriz.shape[1] < 6:
                 messagebox.showwarning("Aviso", f"El fichero '{nombre_archivo}' tiene menos de 6 columnas y no se puede procesar para obtener el vector complejo.")
                 continue
-            
+
             # Columna 5 (índice 4) es la parte real, Columna 6 (índice 5) es la imaginaria
             parte_real = matriz[:, 4]
             parte_imaginaria = matriz[:, 5]
             
-            vectores_complejos[file] = parte_real + 1j * parte_imaginaria
+            vectores_complejos.append(parte_real + 1j * parte_imaginaria)
+            archivos_vectores.append(nombre_archivo)
 
         # --- Mostrar los vectores complejos creados ---
         if vectores_complejos:
@@ -230,8 +237,8 @@ class App:
             self.matrices_text.insert(tk.END, "--- Vectores Complejos (Columna 5: Real, Columna 6: Imag) ---\n")
             self.matrices_text.insert(tk.END, "============================================================\n\n")
 
-            for file, vector in vectores_complejos.items():
-                nombre_archivo = Path(file).name
+            for i, vector in enumerate(vectores_complejos):
+                nombre_archivo = archivos_vectores[i]
                 self.matrices_text.insert(tk.END, f"--- Vector de: {nombre_archivo} ---\n")
 
                 # Formatear cada número complejo y unirlo con saltos de línea
@@ -240,10 +247,47 @@ class App:
                 self.matrices_text.insert(tk.END, "      Real         Imaginario\n")
                 self.matrices_text.insert(tk.END, vector_str + "\n\n")
 
-        # El siguiente paso sería usar 'vectores_complejos' para los cálculos
-        # de 3 o 5 ficheros.
-        
-        
+        # --- PASO 3: Calcular el vector resultante según el número de ficheros ---
+        vector_resultado = None
+        num_vectores = len(vectores_complejos)
+
+        # Validar que todos los ficheros seleccionados produjeron un vector complejo
+        if num_vectores == num_files:
+            if num_vectores == 3:
+                V1, V2, V3 = vectores_complejos[0], vectores_complejos[1], vectores_complejos[2]
+                
+                # Fórmula: (V3 - V2) / (1 - ((V3 - V2) / V1))
+                numerador = V3 - V2
+                # Evitar división por cero en el término intermedio
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    termino_division = np.divide(numerador, V1)
+                    termino_division[V1 == 0] = np.inf # Si V1 es 0, el término es infinito
+                denominador = 1 - termino_division
+                
+                # Evitar división por cero en el cálculo final
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    vector_resultado = np.divide(numerador, denominador)
+                    vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
+
+            elif num_vectores == 5:
+                V1, V2, V3, V4, V5 = vectores_complejos[0], vectores_complejos[1], vectores_complejos[2], vectores_complejos[3], vectores_complejos[4]
+                
+                # Fórmula: (V4 * (V3 - V2) * (V1 - V5)) / ((V1 - V3) * (V5 - V2))
+                numerador = V4 * (V3 - V2) * (V1 - V5)
+                denominador = (V1 - V3) * (V5 - V2)
+
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    vector_resultado = np.divide(numerador, denominador)
+                    vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
+
+        # --- Mostrar el vector resultado ---
+        if vector_resultado is not None:
+            self.matrices_text.insert(tk.END, "============================================================\n")
+            self.matrices_text.insert(tk.END, f"--- VECTOR RESULTADO (Cálculo con {num_vectores} ficheros) ---\n")
+            self.matrices_text.insert(tk.END, "============================================================\n\n")
+            vector_str = "\n".join([f"{c.real: >12.6f} {c.imag: >+12.6f}j" if not np.isnan(c) else "      Cálculo inválido (división por cero)" for c in vector_resultado])
+            self.matrices_text.insert(tk.END, "      Real         Imaginario\n")
+            self.matrices_text.insert(tk.END, vector_str + "\n\n")
 
 def main():
     root = tk.Tk()
