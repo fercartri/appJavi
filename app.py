@@ -17,6 +17,7 @@ class App:
         # Variables
         self.files = []
         self.file_labels = []
+        self.vector_resultado = None
         
         # Crea marco principal
         self.main_frame = ttk.Frame(self.root, padding="10")
@@ -120,6 +121,9 @@ class App:
         # Limpiar el área de texto de las matrices
         self.matrices_text.delete("1.0", tk.END)
 
+        # Resetear el resultado
+        self.vector_resultado = None
+
     def read_matrix(self, filepath):
         try:
             with open(filepath, 'r') as file:
@@ -169,6 +173,9 @@ class App:
             return
 
     def analyze_files(self):
+        # Resetear estado previo
+        self.vector_resultado = None
+
         num_files = len(self.files)
         if num_files not in [3, 5]:
             messagebox.showerror("Error de Análisis", f"Se requieren 3 o 5 ficheros para el análisis, pero hay {num_files} en la lista.")
@@ -260,7 +267,7 @@ class App:
                 self.matrices_text.insert(tk.END, vector_str + "\n\n")
 
         # --- PASO 3: Calcular el vector resultante según el número de ficheros ---
-        vector_resultado = None
+        self.vector_resultado = None
         num_vectores = len(vectores_complejos)
 
         # Validar que todos los ficheros seleccionados produjeron un vector complejo
@@ -278,8 +285,8 @@ class App:
                 
                 # Evitar división por cero en el cálculo final
                 with np.errstate(divide='ignore', invalid='ignore'):
-                    vector_resultado = np.divide(numerador, denominador)
-                    vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
+                    self.vector_resultado = np.divide(numerador, denominador)
+                    self.vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
 
             elif num_vectores == 5:
                 V1, V2, V3, V4, V5 = vectores_complejos[0], vectores_complejos[1], vectores_complejos[2], vectores_complejos[3], vectores_complejos[4]
@@ -289,17 +296,63 @@ class App:
                 denominador = (V1 - V3) * (V5 - V2)
 
                 with np.errstate(divide='ignore', invalid='ignore'):
-                    vector_resultado = np.divide(numerador, denominador)
-                    vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
+                    self.vector_resultado = np.divide(numerador, denominador)
+                    self.vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
 
         # --- Mostrar el vector resultado ---
-        if vector_resultado is not None:
+        if self.vector_resultado is not None:
             self.matrices_text.insert(tk.END, "============================================================\n")
             self.matrices_text.insert(tk.END, f"--- VECTOR RESULTADO (Cálculo con {num_vectores} ficheros) ---\n")
             self.matrices_text.insert(tk.END, "============================================================\n\n")
-            vector_str = "\n".join([f"{c.real: >12.6f} {c.imag: >+12.6f}j" if not np.isnan(c) else "      Cálculo inválido (división por cero)" for c in vector_resultado])
+            vector_str = "\n".join([f"{c.real: >12.6f} {c.imag: >+12.6f}j" if not np.isnan(c) else "      Cálculo inválido (división por cero)" for c in self.vector_resultado])
             self.matrices_text.insert(tk.END, "      Real         Imaginario\n")
             self.matrices_text.insert(tk.END, vector_str + "\n\n")
+            
+            # Guardar el fichero automáticamente
+            self._save_result_file_auto()
+
+    def _save_result_file_auto(self):
+        """Guarda el fichero de resultado automáticamente en el mismo directorio que el fichero plantilla."""
+        if self.vector_resultado is None:
+            return
+        
+        # El tercer fichero (índice 2) se usa como plantilla
+        template_filepath = Path(self.files[2])
+        output_dir = template_filepath.parent
+        save_path = output_dir / "medida_ajustada.z"
+
+        try:
+            with open(template_filepath, 'r') as infile, open(save_path, 'w', newline='\n') as outfile:
+                data_started = False
+                data_idx = 0
+                for line in infile:
+                    if "End Comments" in line:
+                        data_started = True
+                        outfile.write(line)
+                        continue
+                    
+                    if not data_started:
+                        outfile.write(line)
+                    else:
+                        # Es una línea de datos
+                        cols = re.split(r'\s+', line.strip())
+                        if len(cols) < 6: # Si es una línea de datos mal formada o vacía
+                            outfile.write(line)
+                            continue
+
+                        result_val = self.vector_resultado[data_idx]
+
+                        if not np.isnan(result_val):
+                            cols[4] = f"{result_val.real:.6E}"
+                            cols[5] = f"{result_val.imag:.6E}"
+                        
+                        outfile.write("\t".join(cols) + "\n")
+                        data_idx += 1
+            
+            self.result_label.config(text=self.result_label.cget("text") + f"\nResultado guardado en: {save_path}")
+
+        except Exception as e:
+            messagebox.showerror("Error al guardar automáticamente", f"No se pudo guardar el fichero:\n{str(e)}")
 
 def main():
     root = tk.Tk()
