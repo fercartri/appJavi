@@ -319,8 +319,9 @@ class App:
         # El tercer fichero (índice 2) se usa como plantilla
         template_filepath = Path(self.files[2])
         output_dir = template_filepath.parent
-        save_path = output_dir / "medida_ajustada.z"
 
+        new_filename = f"{template_filepath.stem}_AJUSTADA{template_filepath.suffix}"
+        save_path = output_dir / new_filename
         try:
             with open(template_filepath, 'r') as infile, open(save_path, 'w', newline='\n') as outfile:
                 data_started = False
