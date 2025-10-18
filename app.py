@@ -26,7 +26,7 @@ class App:
         self.root.columnconfigure(0, weight=1)
         
         # Botón para añadir ficheros
-        self.add_button = ttk.Button(self.main_frame, text="Subir Ficheros", command=self.add_files)
+        self.add_button = ttk.Button(self.main_frame, text="Añadir Fichero", command=self.add_file)
         self.add_button.grid(row=0, column=0, sticky=tk.W, pady=5)
         # Configurar el grid del main_frame para que la fila de resultados se expanda
         self.main_frame.rowconfigure(4, weight=1)
@@ -70,29 +70,36 @@ class App:
         self.scrollbar_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
         self.matrices_text.config(yscrollcommand=self.scrollbar_y.set)
 
-    def add_files(self):
-        self.delete_files()
+    def add_file(self):
+        # Comprobar que no se exceda el límite de 5 ficheros
+        if len(self.files) >= 5:
+            messagebox.showwarning("Límite alcanzado", "No se pueden añadir más de 5 ficheros.")
+            return
 
-        new_files = filedialog.askopenfilenames(
+        new_file = filedialog.askopenfilename(
             title="Seleccionar ficheros",
             filetypes=[("All files", "*.*")]
         )
 
-        # Comprobar número de ficheros válido
-        if len(new_files) != 0 and len(new_files) != 3 and len(new_files) != 5:
-            messagebox.showerror("Error", "Debe seleccionar 3 o 5 ficheros")
+        if not new_file: # Si el usuario cancela la selección
             return
 
-        # Ocultar el mensaje de "no hay ficheros"
-        self.empty_label.grid_remove()
-        
-        for file in new_files:
-            label = ttk.Label(self.files_list_frame, text=file)
-            label.grid(row=len(self.file_labels), column=0, sticky=tk.W)
-            self.files.append(file)
-            self.file_labels.append(label)
+        # Comprobar si el fichero ya ha sido añadido
+        if new_file in self.files:
+            messagebox.showwarning("Fichero duplicado", "Este fichero ya ha sido añadido a la lista.")
+            return
 
-        text = f"Se han subido {len(self.file_labels)} ficheros"
+        # Ocultar el mensaje de "no hay ficheros" si es el primer fichero
+        if not self.files:
+            self.empty_label.grid_remove()
+        
+        # Añadir el fichero a la lista y a la UI
+        label = ttk.Label(self.files_list_frame, text=Path(new_file).name)
+        label.grid(row=len(self.file_labels), column=0, sticky=tk.W, padx=5)
+        self.files.append(new_file)
+        self.file_labels.append(label)
+
+        text = f"Ficheros en la lista: {len(self.file_labels)}"
         self.result_label.config(text=text)
     
     def delete_files(self):
@@ -163,8 +170,8 @@ class App:
 
     def analyze_files(self):
         num_files = len(self.files)
-        if num_files == 0:
-            messagebox.showwarning("Aviso", "No hay ficheros seleccionados para analizar")
+        if num_files not in [3, 5]:
+            messagebox.showerror("Error de Análisis", f"Se requieren 3 o 5 ficheros para el análisis, pero hay {num_files} en la lista.")
             return
         
         # Diccionario para almacenar las matrices de datos y número de puntos
