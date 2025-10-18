@@ -15,70 +15,79 @@ class App:
         self.root.state('zoomed')
         
         # Variables
-        self.files = []
-        self.file_labels = []
+        self.files = [None] * 5  # Lista de 5 ranuras para ficheros
+        self.file_widgets = [] # Para guardar las etiquetas y entradas de la UI
         self.vector_resultado = None
         
         # Crea marco principal
+        # Usaremos pack para dividir la ventana en el marco principal y la barra de estado
         self.main_frame = ttk.Frame(self.root, padding="10")
-        self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        # Configurar el grid para que el marco principal se expanda
-        self.root.rowconfigure(0, weight=1)
-        self.root.columnconfigure(0, weight=1)
+        self.main_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Barra de estado en la parte inferior
+        self.status_bar = ttk.Frame(self.root, relief=tk.SUNKEN, padding=(2, 2))
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        author_label = ttk.Label(self.status_bar, text="Desarrollado por Fernando Carmona Palacio", anchor=tk.E)
+        author_label.pack(fill=tk.X)
         
-        # Botón para añadir ficheros
-        self.add_button = ttk.Button(self.main_frame, text="Añadir Fichero", command=self.add_file)
-        self.add_button.grid(row=0, column=0, sticky=tk.W, pady=5)
         # Configurar el grid del main_frame para que la fila de resultados se expanda
-        self.main_frame.rowconfigure(4, weight=1)
+        self.main_frame.rowconfigure(2, weight=1)
         self.main_frame.columnconfigure(0, weight=1)
         
         # Botón para borrar ficheros
         self.clear_button = ttk.Button(self.main_frame, text="Borrar Ficheros", command=self.delete_files)
-        self.clear_button.grid(row=0, column=1, sticky=tk.W, pady=5, padx=5)
+        self.clear_button.grid(row=0, column=0, sticky=tk.W, pady=5)
         
         # Cuadro de listado de ficheros
         self.files_list_frame = ttk.LabelFrame(self.main_frame, text="Ficheros seleccionados")
         self.files_list_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
-        # Mensaje por defecto cuando no hay ficheros
-        self.empty_label = ttk.Label(self.files_list_frame, text="No hay ficheros seleccionados")
-        self.empty_label.grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+        # Crear 5 ranuras para ficheros
+        for i in range(5):
+            slot_frame = ttk.Frame(self.files_list_frame)
+            slot_frame.grid(row=i, column=0, sticky=tk.EW, pady=2)
+            self.files_list_frame.columnconfigure(0, weight=1)
+
+            label = ttk.Label(slot_frame, text=f"Fichero {i+1} (V{i+1}):")
+            label.grid(row=0, column=0, padx=5, sticky=tk.W)
+
+            entry = ttk.Entry(slot_frame, width=80, state="readonly")
+            entry.grid(row=0, column=1, padx=5, sticky=tk.EW)
+            slot_frame.columnconfigure(1, weight=1)
+
+            # Usamos una función lambda para capturar el valor de 'i'
+            select_button = ttk.Button(slot_frame, text="Seleccionar...", command=lambda i=i: self.select_file_for_slot(i))
+            select_button.grid(row=0, column=2, padx=5)
+
+            clear_button = ttk.Button(slot_frame, text="Quitar", command=lambda i=i: self.clear_slot(i))
+            clear_button.grid(row=0, column=3, padx=5)
+
+            self.file_widgets.append({'entry': entry, 'select_button': select_button, 'clear_button': clear_button})
 
         # Botón para analizar ficheros
         self.analyze_button = ttk.Button(self.main_frame, text="Analizar Ficheros", command=self.analyze_files)
-        self.analyze_button.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=10)
+        self.analyze_button.grid(row=0, column=1, sticky=tk.W, pady=10, padx=5)
         
         # Mensaje de resultado
         self.result_label = ttk.Label(self.main_frame, text="")
-        self.result_label.grid(row=3, column=0, columnspan=2, sticky=tk.W, pady=5)
+        self.result_label.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
 
         # Frame para mostrar las matrices
         self.matrices_frame = ttk.LabelFrame(self.main_frame, text="Contenido de las Matrices")
-        self.matrices_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        self.matrices_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         self.matrices_frame.rowconfigure(0, weight=1)
         self.matrices_frame.columnconfigure(0, weight=1)
 
         self.matrices_text = tk.Text(self.matrices_frame, wrap="none", height=10)
         self.matrices_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-
-        self.scrollbar_x = ttk.Scrollbar(self.matrices_frame, orient=tk.HORIZONTAL, command=self.matrices_text.xview)
-        self.scrollbar_x.grid(row=1, column=0, sticky=(tk.W, tk.E))
-        self.matrices_text.config(xscrollcommand=self.scrollbar_x.set)
-
         
         self.scrollbar_y = ttk.Scrollbar(self.matrices_frame, orient=tk.VERTICAL, command=self.matrices_text.yview)
         self.scrollbar_y.grid(row=0, column=1, sticky=(tk.N, tk.S))
         self.matrices_text.config(yscrollcommand=self.scrollbar_y.set)
 
-    def add_file(self):
-        # Comprobar que no se exceda el límite de 5 ficheros
-        if len(self.files) >= 5:
-            messagebox.showwarning("Límite alcanzado", "No se pueden añadir más de 5 ficheros.")
-            return
-
+    def select_file_for_slot(self, slot_index):
         new_file = filedialog.askopenfilename(
-            title="Seleccionar ficheros",
+            title=f"Seleccionar Fichero {slot_index + 1}",
             filetypes=[("All files", "*.*")]
         )
 
@@ -86,37 +95,32 @@ class App:
             return
 
         # Comprobar si el fichero ya ha sido añadido
-        if new_file in self.files:
+        if new_file in [f for f in self.files if f is not None]:
             messagebox.showwarning("Fichero duplicado", "Este fichero ya ha sido añadido a la lista.")
             return
-
-        # Ocultar el mensaje de "no hay ficheros" si es el primer fichero
-        if not self.files:
-            self.empty_label.grid_remove()
         
-        # Añadir el fichero a la lista y a la UI
-        label = ttk.Label(self.files_list_frame, text=Path(new_file).name)
-        label.grid(row=len(self.file_labels), column=0, sticky=tk.W, padx=5)
-        self.files.append(new_file)
-        self.file_labels.append(label)
+        # Actualizar la ranura
+        self.files[slot_index] = new_file
+        entry = self.file_widgets[slot_index]['entry']
+        entry.config(state="normal")
+        entry.delete(0, tk.END)
+        entry.insert(0, Path(new_file).name)
+        entry.config(state="readonly")
 
-        text = f"Ficheros en la lista: {len(self.file_labels)}"
-        self.result_label.config(text=text)
+    def clear_slot(self, slot_index):
+        self.files[slot_index] = None
+        entry = self.file_widgets[slot_index]['entry']
+        entry.config(state="normal")
+        entry.delete(0, tk.END)
+        entry.config(state="readonly")
     
     def delete_files(self):
-        # Limpiar la lista de archivos
-        self.files.clear()
-        
-        # Destruir los widgets de las etiquetas existentes
-        for label in self.file_labels:
-            label.destroy()
-        self.file_labels.clear()
+        # Limpiar todas las ranuras
+        for i in range(5):
+            self.clear_slot(i)
         
         # Limpiar el mensaje de resultado
         self.result_label.config(text="")
-        
-        # Volver a mostrar el mensaje de "no hay ficheros"
-        self.empty_label.grid()
 
         # Limpiar el área de texto de las matrices
         self.matrices_text.delete("1.0", tk.END)
@@ -176,7 +180,10 @@ class App:
         # Resetear estado previo
         self.vector_resultado = None
 
-        num_files = len(self.files)
+        # Obtener la lista de ficheros reales (no None)
+        selected_files = [f for f in self.files if f is not None]
+        num_files = len(selected_files)
+
         if num_files not in [3, 5]:
             messagebox.showerror("Error de Análisis", f"Se requieren 3 o 5 ficheros para el análisis, pero hay {num_files} en la lista.")
             return
@@ -184,9 +191,8 @@ class App:
         # Diccionario para almacenar las matrices de datos y número de puntos
         matrices_datos = {}
         errores = []
-        
-        # Procesar cada archivo
-        for file in self.files:
+
+        for file in selected_files:
             matriz, puntos = self.read_matrix(file)
             if matriz is not None:
                 matrices_datos[file] = matriz
@@ -230,8 +236,10 @@ class App:
         
         # --- PASO 2: Crear vectores complejos a partir de las matrices ---
         vectores_complejos = []
-        archivos_vectores = [] # Guardar los nombres de archivo correspondientes
-        for file in self.files:
+        archivos_vectores = []  # Guardar los nombres de archivo correspondientes
+
+        # Iterar sobre los ficheros seleccionados para mantener el orden
+        for file in selected_files:
             # Si un fichero falló en la lectura, no estará en matrices_datos
             if file not in matrices_datos:
                 continue
@@ -316,7 +324,11 @@ class App:
         if self.vector_resultado is None:
             return
         
-        # El tercer fichero (índice 2) se usa como plantilla
+        # El tercer fichero (ranura 3, índice 2) se usa como plantilla
+        if self.files[2] is None:
+            messagebox.showerror("Error al guardar", "La ranura del Fichero 3 está vacía y se necesita como plantilla para guardar.")
+            return
+
         template_filepath = Path(self.files[2])
         output_dir = template_filepath.parent
 
