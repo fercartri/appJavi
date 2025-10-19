@@ -31,7 +31,7 @@ class App:
         author_label.pack(fill=tk.X)
         
         # Configurar el grid del main_frame para que la fila de resultados se expanda
-        self.main_frame.rowconfigure(2, weight=1)
+        self.main_frame.rowconfigure(3, weight=1)
         self.main_frame.columnconfigure(0, weight=1)
         
         # Botón para borrar ficheros
@@ -283,18 +283,14 @@ class App:
             if num_vectores == 3:
                 V1, V2, V3 = vectores_complejos[0], vectores_complejos[1], vectores_complejos[2]
                 
-                # Fórmula: (V3 - V2) / (1 - ((V3 - V2) / V1))
-                numerador = V3 - V2
-                # Evitar división por cero en el término intermedio
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    termino_division = np.divide(numerador, V1)
-                    termino_division[V1 == 0] = np.inf # Si V1 es 0, el término es infinito
-                denominador = 1 - termino_division
+                # Fórmula: V1 * ((V2 - V3) / (V3 - V1))
+                numerador = V2 - V3
+                denominador = V3 - V1
                 
                 # Evitar división por cero en el cálculo final
                 with np.errstate(divide='ignore', invalid='ignore'):
-                    self.vector_resultado = np.divide(numerador, denominador)
-                    self.vector_resultado[denominador == 0] = np.nan # Marcar como NaN si el denominador es 0
+                    division_term = np.divide(numerador, denominador)
+                    self.vector_resultado = V1 * division_term
 
             elif num_vectores == 5:
                 V1, V2, V3, V4, V5 = vectores_complejos[0], vectores_complejos[1], vectores_complejos[2], vectores_complejos[3], vectores_complejos[4]
@@ -356,8 +352,8 @@ class App:
                         result_val = self.vector_resultado[data_idx]
 
                         if not np.isnan(result_val):
-                            cols[4] = f"{result_val.real:.6E}"
-                            cols[5] = f"{result_val.imag:.6E}"
+                            cols[4] = f"{result_val.real:.4E}"
+                            cols[5] = f"{result_val.imag:.4E}"
                         
                         outfile.write("\t".join(cols) + "\n")
                         data_idx += 1
